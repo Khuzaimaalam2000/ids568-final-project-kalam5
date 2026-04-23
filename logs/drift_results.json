@@ -1,0 +1,376 @@
+{
+  "timestamp": "2026-04-22T23:22:17.788781",
+  "n_reference": 1000,
+  "n_windows": 8,
+  "features_analyzed": [
+    "prompt_length",
+    "latency_ms",
+    "transaction_amount",
+    "response_length"
+  ],
+  "results": {
+    "features": {
+      "prompt_length": {
+        "psi_scores": [
+          0.056754240658739866,
+          0.5258305942922161,
+          2.704425272211139,
+          4.306474999635504,
+          8.091578634727512,
+          9.358423665822185,
+          16.252631363193533,
+          13.719078557157024
+        ],
+        "ks_statistics": [
+          0.056,
+          0.269,
+          0.547,
+          0.599,
+          0.77,
+          0.811,
+          0.908,
+          0.922
+        ],
+        "ks_pvalues": [
+          0.6590240971258305,
+          4.3484151035770023e-11,
+          1.115410405364896e-46,
+          1.0006926304814455e-56,
+          2.5862549895346703e-100,
+          5.152921088920515e-114,
+          2.6498061137817286e-155,
+          6.39057448849253e-163
+        ],
+        "wasserstein_distances": [
+          0.26399948150267494,
+          2.120491173160159,
+          5.019432567631124,
+          7.259536157776185,
+          10.559862093108174,
+          12.698715547852778,
+          15.326862062367184,
+          17.993907965384707
+        ],
+        "anomaly_rates": [
+          0.0,
+          0.005,
+          0.0,
+          0.0,
+          0.005,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "drift_severity": [
+          "STABLE",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL"
+        ]
+      },
+      "latency_ms": {
+        "psi_scores": [
+          0.045784112889315165,
+          0.6598078197158056,
+          3.0495240506364687,
+          5.710460214037105,
+          8.116764152311282,
+          9.757960865071167,
+          15.683873676983954,
+          15.761688516280891
+        ],
+        "ks_statistics": [
+          0.055,
+          0.32,
+          0.572,
+          0.754,
+          0.792,
+          0.9,
+          0.912,
+          0.944
+        ],
+        "ks_pvalues": [
+          0.6807925967145928,
+          1.3525176868642885e-15,
+          2.3619574505366787e-51,
+          2.1919357647947738e-95,
+          1.8461590927142156e-107,
+          3.279704931686326e-151,
+          2.0398080312370896e-157,
+          2.0887898158991372e-176
+        ],
+        "wasserstein_distances": [
+          4.178196557570207,
+          38.015621793637635,
+          79.89955428124505,
+          126.70189781112227,
+          151.52349054920745,
+          201.19154890517572,
+          229.91026643057342,
+          279.31992419797274
+        ],
+        "anomaly_rates": [
+          0.005,
+          0.0,
+          0.0,
+          0.01,
+          0.0,
+          0.005,
+          0.0,
+          0.005
+        ],
+        "drift_severity": [
+          "STABLE",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL"
+        ]
+      },
+      "transaction_amount": {
+        "psi_scores": [
+          0.5939225524272352,
+          0.3000148659673806,
+          1.1976117169188762,
+          0.9285794528160255,
+          2.146458777192472,
+          3.1355288345492895,
+          3.125664714991292,
+          2.791280059031338
+        ],
+        "ks_statistics": [
+          0.045,
+          0.09,
+          0.128,
+          0.138,
+          0.28,
+          0.27,
+          0.283,
+          0.366
+        ],
+        "ks_pvalues": [
+          0.878561859998239,
+          0.1290579536546148,
+          0.007949365725569918,
+          0.0032450413338442957,
+          5.452467945782653e-12,
+          3.6135636660988426e-11,
+          3.0479297461050967e-12,
+          2.164572213164719e-20
+        ],
+        "wasserstein_distances": [
+          7.342279338001705,
+          16.61229305745504,
+          43.68302097878474,
+          45.965302926764515,
+          107.97983939241605,
+          118.16582626582127,
+          124.98651169521088,
+          149.26341807840288
+        ],
+        "anomaly_rates": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "drift_severity": [
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL"
+        ]
+      },
+      "response_length": {
+        "psi_scores": [
+          0.08859851376305394,
+          0.11131951161757066,
+          0.3884256307835525,
+          1.125888681965142,
+          2.8722785125407166,
+          4.164707545906106,
+          5.089849341539333,
+          6.810118024957577
+        ],
+        "ks_statistics": [
+          0.084,
+          0.136,
+          0.282,
+          0.373,
+          0.54,
+          0.662,
+          0.714,
+          0.786
+        ],
+        "ks_pvalues": [
+          0.18327147887677328,
+          0.003903053489088233,
+          3.7027048838663236e-12,
+          3.491292356234108e-21,
+          2.024846670932485e-45,
+          1.0738981112535438e-70,
+          6.067780633783834e-84,
+          1.82052565239224e-105
+        ],
+        "wasserstein_distances": [
+          0.9022248302405694,
+          2.0053122829210976,
+          4.855864875266394,
+          7.889754615003218,
+          11.775496049487389,
+          14.9497875326473,
+          17.229051336109507,
+          19.059823856667293
+        ],
+        "anomaly_rates": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.005,
+          0.0
+        ],
+        "drift_severity": [
+          "STABLE",
+          "WARNING",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL",
+          "CRITICAL"
+        ]
+      }
+    },
+    "windows": [
+      {
+        "window": 0,
+        "drift_factor": 0.0,
+        "n_samples": 200,
+        "error_rate": 0.02,
+        "cache_hit_rate": 0.585,
+        "critical_features": [
+          "transaction_amount"
+        ]
+      },
+      {
+        "window": 1,
+        "drift_factor": 0.14285714285714285,
+        "n_samples": 200,
+        "error_rate": 0.065,
+        "cache_hit_rate": 0.59,
+        "critical_features": [
+          "prompt_length",
+          "latency_ms",
+          "transaction_amount"
+        ]
+      },
+      {
+        "window": 2,
+        "drift_factor": 0.2857142857142857,
+        "n_samples": 200,
+        "error_rate": 0.075,
+        "cache_hit_rate": 0.48,
+        "critical_features": [
+          "prompt_length",
+          "latency_ms",
+          "transaction_amount",
+          "response_length"
+        ]
+      },
+      {
+        "window": 3,
+        "drift_factor": 0.42857142857142855,
+        "n_samples": 200,
+        "error_rate": 0.115,
+        "cache_hit_rate": 0.46,
+        "critical_features": [
+          "prompt_length",
+          "latency_ms",
+          "transaction_amount",
+          "response_length"
+        ]
+      },
+      {
+        "window": 4,
+        "drift_factor": 0.5714285714285714,
+        "n_samples": 200,
+        "error_rate": 0.105,
+        "cache_hit_rate": 0.425,
+        "critical_features": [
+          "prompt_length",
+          "latency_ms",
+          "transaction_amount",
+          "response_length"
+        ]
+      },
+      {
+        "window": 5,
+        "drift_factor": 0.7142857142857143,
+        "n_samples": 200,
+        "error_rate": 0.085,
+        "cache_hit_rate": 0.35,
+        "critical_features": [
+          "prompt_length",
+          "latency_ms",
+          "transaction_amount",
+          "response_length"
+        ]
+      },
+      {
+        "window": 6,
+        "drift_factor": 0.8571428571428571,
+        "n_samples": 200,
+        "error_rate": 0.105,
+        "cache_hit_rate": 0.32,
+        "critical_features": [
+          "prompt_length",
+          "latency_ms",
+          "transaction_amount",
+          "response_length"
+        ]
+      },
+      {
+        "window": 7,
+        "drift_factor": 1.0,
+        "n_samples": 200,
+        "error_rate": 0.155,
+        "cache_hit_rate": 0.195,
+        "critical_features": [
+          "prompt_length",
+          "latency_ms",
+          "transaction_amount",
+          "response_length"
+        ]
+      }
+    ],
+    "summary": {
+      "most_drifted_feature": "prompt_length",
+      "max_psi": 16.252631363193533,
+      "features_in_critical": [
+        "prompt_length",
+        "latency_ms",
+        "transaction_amount",
+        "response_length"
+      ],
+      "first_critical_window": 0
+    }
+  }
+}

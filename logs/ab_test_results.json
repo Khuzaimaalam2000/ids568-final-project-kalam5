@@ -1,0 +1,60 @@
+{
+  "simulation_config": {
+    "n_per_variant": 500,
+    "required_sample_size": 36,
+    "alpha": 0.05,
+    "power": 0.8,
+    "mde_latency_ms": 30,
+    "timestamp": "2026-04-22T17:19:18.456204"
+  },
+  "latency": {
+    "metric": "latency_ms",
+    "mean_a": 420.31,
+    "mean_b": 136.89,
+    "mean_diff": 283.42,
+    "pct_improvement": 67.4,
+    "t_statistic": 34.0075,
+    "p_value": 0.0,
+    "significant": true,
+    "cohens_d": 2.151,
+    "ci_95": [
+      267.09,
+      299.75
+    ],
+    "p50_a": 420.58,
+    "p95_a": 493.3,
+    "p99_a": 518.63,
+    "p50_b": 5.97,
+    "p95_b": 423.32,
+    "p99_b": 454.0
+  },
+  "throughput": {
+    "metric": "throughput_rps",
+    "mean_a": 2.11,
+    "mean_b": 9.826,
+    "improvement": 7.716,
+    "pct_improvement": 365.8,
+    "t_statistic": -114.7113,
+    "p_value": 0.0,
+    "significant": true,
+    "ci_95": [
+      7.584,
+      7.848
+    ]
+  },
+  "error_rate": {
+    "metric": "error_rate",
+    "error_rate_a": 2.4,
+    "error_rate_b": 0.2,
+    "chi2_statistic": 7.7936,
+    "p_value": 0.005243,
+    "significant": true,
+    "dof": 1
+  },
+  "bootstrap_ci_latency_diff": {
+    "lower": 267.52,
+    "upper": 300.01,
+    "interpretation": "95% of bootstrap samples show A-B latency difference between 267.5ms and 300.0ms"
+  },
+  "recommendation": "SHIP B"
+}

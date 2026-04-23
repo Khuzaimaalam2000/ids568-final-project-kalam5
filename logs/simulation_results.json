@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-04-21T19:44:52.462720",
+  "summary": {
+    "total_requests": 105.0,
+    "cache_hit_rate_pct": 31.0,
+    "avg_latency_ms": 282.28,
+    "p95_latency_ms": 550.15,
+    "p99_latency_ms": 567.07,
+    "drift_scores": {
+      "prompt_length": 0.23666666666666666
+    },
+    "simulation_duration_s": 120.25,
+    "total_simulated": 108
+  },
+  "phases": {
+    "normal": 40,
+    "cache_warm": 15,
+    "spike": 20,
+    "errors": 8,
+    "drift": 25
+  }
+}

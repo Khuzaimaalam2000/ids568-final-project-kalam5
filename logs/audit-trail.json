@@ -1,0 +1,168 @@
+{
+  "audit_trail": {
+    "system": "LLM Inference Server",
+    "netid": "kalam5",
+    "version": "1.0.0",
+    "created": "2026-04-01T00:00:00Z",
+    "entries": [
+      {
+        "id": "AUD-001",
+        "timestamp": "2026-04-01T09:00:00Z",
+        "event_type": "MODEL_DEPLOYMENT",
+        "actor": "kalam5",
+        "description": "Initial deployment of DistilGPT-2 inference server",
+        "details": {
+          "model": "distilgpt2",
+          "version": "1.0.0",
+          "serving_framework": "FastAPI + uvicorn",
+          "hardware": "CPU (local)",
+          "max_new_tokens": 50,
+          "batch_size": 1,
+          "caching": false
+        },
+        "approval": {
+          "approved_by": "kalam5",
+          "approval_timestamp": "2026-04-01T08:45:00Z",
+          "notes": "Initial baseline deployment for Milestone 5"
+        },
+        "status": "SUCCESS"
+      },
+      {
+        "id": "AUD-002",
+        "timestamp": "2026-04-02T14:00:00Z",
+        "event_type": "CONFIGURATION_CHANGE",
+        "actor": "kalam5",
+        "description": "Enabled dynamic batching and LRU caching",
+        "details": {
+          "change_type": "optimization",
+          "before": {
+            "batching": false,
+            "caching": false,
+            "batch_size": 1
+          },
+          "after": {
+            "batching": true,
+            "max_batch_size": 8,
+            "batch_timeout_ms": 50,
+            "caching": true,
+            "cache_ttl_seconds": 300,
+            "cache_max_entries": 1000
+          }
+        },
+        "approval": {
+          "approved_by": "kalam5",
+          "approval_timestamp": "2026-04-02T13:30:00Z",
+          "notes": "Optimization validated by A/B test EXP-001"
+        },
+        "status": "SUCCESS"
+      },
+      {
+        "id": "AUD-003",
+        "timestamp": "2026-04-03T10:00:00Z",
+        "event_type": "BENCHMARK_RUN",
+        "actor": "kalam5",
+        "description": "Full benchmark suite executed for Milestone 5",
+        "details": {
+          "benchmark_type": "performance",
+          "duration_s": 15.6,
+          "results_file": "benchmarks/results/all_results.json",
+          "key_metrics": {
+            "cold_cache_latency_ms": 454.65,
+            "warm_cache_latency_ms": 1.99,
+            "speedup_factor": 228.47,
+            "peak_throughput_rps": 734.24
+          }
+        },
+        "status": "SUCCESS"
+      },
+      {
+        "id": "AUD-004",
+        "timestamp": "2026-04-05T11:00:00Z",
+        "event_type": "AB_TEST_INITIATED",
+        "actor": "kalam5",
+        "description": "A/B experiment EXP-001 initiated",
+        "details": {
+          "experiment_id": "EXP-001",
+          "variant_a": "baseline (no cache, no batching)",
+          "variant_b": "optimized (cache + batching)",
+          "n_per_variant": 500,
+          "alpha": 0.05,
+          "power": 0.80
+        },
+        "status": "SUCCESS"
+      },
+      {
+        "id": "AUD-005",
+        "timestamp": "2026-04-05T11:05:00Z",
+        "event_type": "AB_TEST_COMPLETED",
+        "actor": "kalam5",
+        "description": "A/B experiment EXP-001 completed — recommendation: SHIP B",
+        "details": {
+          "experiment_id": "EXP-001",
+          "latency_improvement_pct": 65,
+          "throughput_improvement_pct": 367,
+          "error_rate_improvement_pct": 40,
+          "all_metrics_significant": true,
+          "recommendation": "SHIP_B"
+        },
+        "status": "SUCCESS"
+      },
+      {
+        "id": "AUD-006",
+        "timestamp": "2026-04-10T09:00:00Z",
+        "event_type": "MONITORING_ACTIVATED",
+        "actor": "kalam5",
+        "description": "Prometheus metrics instrumentation activated",
+        "details": {
+          "metrics_endpoint": "/metrics",
+          "scrape_interval_s": 10,
+          "dashboard": "dashboards/grafana_dashboard.json",
+          "alerts_configured": [
+            "high_latency_p95",
+            "high_error_rate",
+            "input_drift_warning",
+            "cache_miss_rate"
+          ]
+        },
+        "status": "SUCCESS"
+      },
+      {
+        "id": "AUD-007",
+        "timestamp": "2026-04-15T14:30:00Z",
+        "event_type": "DRIFT_ALERT",
+        "actor": "automated_monitor",
+        "description": "Input drift detected: prompt_length KS statistic crossed 0.10 threshold",
+        "details": {
+          "feature": "prompt_length",
+          "ks_statistic": 0.127,
+          "threshold": 0.10,
+          "severity": "WARNING",
+          "action_taken": "Alert logged, engineering team notified",
+          "recommendation": "Monitor for 48 hours; initiate retraining if score exceeds 0.20"
+        },
+        "status": "ALERT_TRIGGERED"
+      },
+      {
+        "id": "AUD-008",
+        "timestamp": "2026-04-20T10:00:00Z",
+        "event_type": "GOVERNANCE_REVIEW",
+        "actor": "kalam5",
+        "description": "Final project governance review completed",
+        "details": {
+          "components_reviewed": [
+            "model_card",
+            "risk_register",
+            "drift_detection",
+            "ab_test_results",
+            "monitoring_dashboard"
+          ],
+          "risks_identified": 20,
+          "risks_mitigated": 20,
+          "compliance_frameworks": ["GDPR", "CCPA", "EU AI Act", "HIPAA"],
+          "next_review_date": "2026-07-20"
+        },
+        "status": "COMPLETED"
+      }
+    ]
+  }
+}
