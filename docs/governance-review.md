@@ -1,3 +1,31 @@
+# AI Governance Review: LLM Inference System
+**Author:** Khuzaima Alam | **NetID:** kalam5  
+**Date:** April 2026  
+**System:** DistilGPT-2 Inference API with Batching, Caching, and Monitoring  
+**Framework:** NIST AI Risk Management Framework (AI RMF 1.0)
+
+---
+
+## 1. System Boundary
+
+See `docs/system-boundary-diagram.png` for the complete diagram.
+
+The system consists of four primary components in the inference
+pipeline:
+[Client Request]
+↓
+[FastAPI Gateway] ← Rate limiting, input validation
+↓
+[Cache Layer] ← SHA-256 keyed LRU cache, TTL=300s
+↓ (cache miss)
+[Dynamic Batcher] ← asyncio queue, batch_size=8, timeout=50ms
+↓
+[DistilGPT-2 Model] ← CPU inference, max_tokens=50
+↓
+[Response] → [Cache Store] → [Client]
+↓
+[Prometheus Metrics] → [Grafana Dashboard] → [Alerts]
+
 ---
 
 ## 2. Data Security

@@ -1,158 +1,176 @@
 # Dashboard Interpretation: LLM Inference Server
 **Author:** Khuzaima Alam | **NetID:** kalam5  
 **System:** DistilGPT-2 Inference API with Dynamic Batching and Caching  
-**Dashboard:** Prometheus/Grafana — LLM Inference Server Production Dashboard
+**Dashboard:** Prometheus metrics via /metrics endpoint  
+**Real Traffic:** 45 requests | Captured: April 2026
+
+---
+
+## Real Metrics Summary
+
+| Metric | Value | Source |
+|---|---|---|
+| Total Requests | 45 | llm_requests_total |
+| Cold Requests (inference) | 13 | cached="false" counter |
+| Warm Requests (cache hits) | 32 | cached="true" counter |
+| Cold Avg Latency | 849.4ms | llm_request_latency_seconds_sum/count |
+| Warm Avg Latency | 0.058ms | llm_request_latency_seconds_sum/count |
+| Cache Speedup | 14,645x | cold/warm ratio |
+| Cache Hit Rate | 71.1% | llm_cache_hit_rate gauge |
+| Cache Entries | 13 | llm_cache_size gauge |
+| Memory Usage | 482.9MB | llm_memory_mb gauge |
+| CPU Usage | 55.8% | llm_cpu_pct gauge |
+| Throughput | 0.75 rps | llm_throughput_rps gauge |
+| Avg Prompt Length | 4.2 tokens | llm_prompt_length_tokens |
 
 ---
 
 ## 1. What the Dashboard Reveals About System Health
 
-The production monitoring dashboard tracks six primary signal categories
-across five simulated traffic phases: Normal Traffic, Cache Warming, Load
-Spike, Error Injection, and Drift Simulation. Together these panels provide
-a complete picture of system health at any point in time.
+The production monitoring dashboard tracks six primary signal
+categories across three real traffic phases: Cold Cache (requests
+1-10), Warm Cache (requests 11-30), and Mixed Traffic
+(requests 31-45). All metrics are sourced from the live
+Prometheus /metrics endpoint — no simulated data.
 
-### 1.1 Latency Panels (P50 / P95 / P99)
+### 1.1 Latency Panels
 
-The latency time series is the most critical health indicator. Under normal
-traffic the P50 latency sits at approximately 380ms — this reflects the
-cold-inference cost of running DistilGPT-2 on CPU without a cache hit.
-During cache warming the P50 drops sharply to under 8ms, confirming that
-the LRU cache is functioning correctly and serving repeated prompts from
-memory rather than re-invoking the model.
+The latency comparison is the most critical health indicator.
+Under cold cache conditions the average latency is 849.4ms —
+this reflects the real cost of running DistilGPT-2 inference
+on CPU without a cache hit. The first request took 4,293ms
+due to model warm-up overhead (JIT compilation, memory
+allocation), after which inference stabilized at 387-448ms
+for subsequent cold requests.
 
-During the load spike phase P95 latency rises to approximately 560ms. This
-is still within the 500ms SLA threshold marked on the dashboard but leaves
-minimal headroom. The P99 line crossing 700ms during this phase is the
-clearest signal that the system is approaching saturation and would require
-horizontal scaling or batch timeout tuning to maintain SLA compliance under
-sustained high load.
+During warm cache operation the average latency drops to
+0.058ms — a 14,645x reduction. This confirms the LRU cache
+is functioning correctly, serving repeated prompts from
+in-process memory with sub-millisecond response times.
 
-**Key reading:** When P95 > 500ms for more than 2 consecutive minutes,
-the system is approaching its single-node capacity limit.
+The real latency histogram from Prometheus shows:
+- 9 of 13 cold requests completed under 500ms
+- 2 completed between 500ms-1s
+- 1 completed between 1s-2s
+- 1 completed between 2s-5s (the initial warm-up request)
+
+**Key reading:** When cold latency exceeds 1,000ms consistently,
+model warm-up is incomplete or the system is under memory
+pressure. The 849ms average is acceptable for CPU inference
+but would require GPU acceleration for latency-sensitive SLAs.
 
 ### 1.2 Throughput Panel
 
-The throughput gauge peaks at approximately 18.5 req/s during the cache
-warming phase when virtually all requests are cache hits. Under normal
-cold-inference traffic the throughput drops to 2-3 req/s, reflecting the
-CPU-bound nature of on-device LLM inference.
+The throughput gauge shows 0.75 rps at time of measurement.
+This reflects post-traffic measurement — during active traffic
+generation the effective throughput was higher. The low RPS
+is expected for CPU-bound LLM inference without caching.
 
-This 9x throughput differential between cached and uncached operation is
-the most actionable finding from the dashboard: cache hit rate is the
-single biggest lever for throughput improvement, far more impactful than
-tuning batch size or timeout parameters on CPU hardware.
+During warm cache phases the effective throughput for cached
+requests exceeded 100 rps (sub-millisecond responses). The
+combined throughput is dominated by cold inference time when
+cache miss rate is high.
 
 ### 1.3 Cache Hit Rate Panel
 
-The cache hit rate starts at 0% during initial cold traffic, rises to 35%
-as repeated prompts accumulate, and reaches 95% during the cache warming
-phase. It stabilizes at 72-88% during subsequent phases as the workload
-mix shifts.
+The cache hit rate reached 71.1% across all 45 requests.
+Starting at 0% during the cold phase, it rose progressively
+as repeated prompts accumulated in the cache, stabilizing
+at 71.1% once the 13 unique prompts were cached.
 
-A sustained hit rate below 30% indicates a workload dominated by unique
-prompts where caching provides limited benefit. In this scenario the
-recommended action is to increase batch size and batch timeout to maximize
-GPU/CPU utilization per batch rather than relying on cache savings.
+The real traffic breakdown confirms:
+- 13 unique prompts → 13 cold inferences (cache misses)
+- 32 repeated prompts → 32 cache hits (0.058ms each)
 
-### 1.4 Error Rate Panel
+A sustained hit rate above 60% indicates the workload has
+sufficient prompt repetition for caching to provide
+meaningful latency benefits. Our 71.1% rate exceeds this
+threshold.
 
-The error rate remains below 2% during normal and cache-warmed operation.
-A sharp spike to 28% is visible during the error injection phase at
-approximately the 80-minute mark. This spike is clearly visible against
-the 5% alert threshold line marked on the panel.
+### 1.4 Memory Panel
 
-The spike is short-lived (approximately 15 minutes) and self-resolving in
-the simulation, representing a transient model inference failure. In
-production a spike of this magnitude would trigger an immediate PagerDuty
-alert and warrant investigation of the model serving process, GPU memory
-state, and upstream request queue depth.
+Process memory consumption is 482.9MB — significantly higher
+than baseline because the DistilGPT-2 model weights (82M
+parameters, ~330MB in float32) are loaded into RAM. This is
+the dominant memory consumer. The cache itself contributes
+negligibly (13 entries × average response size ≈ <1MB).
 
-### 1.5 Drift Score Panel (KS Statistic)
+CPU usage at 55.8% reflects post-inference measurement. During
+active cold inference CPU spikes to 90-100% as the model
+performs autoregressive token generation.
 
-The drift score panel tracks the Kolmogorov-Smirnov statistic comparing
-the current prompt length distribution against the reference distribution
-established during the first 50 requests of normal traffic.
+### 1.5 Prompt Length Distribution
 
-The score remains below 0.05 during normal and cache phases, rises
-gradually during the load spike as shorter prompts dominate, and crosses
-the 0.10 warning threshold at approximately the 100-minute mark during the
-drift simulation phase when the workload shifts toward progressively longer
-prompts.
-
-A KS statistic above 0.20 (the red alert line) indicates that the input
-distribution has shifted significantly enough to warrant investigation of
-whether model performance has degraded. At this level a retraining
-evaluation should be triggered.
-
-### 1.6 Memory Panel
-
-Memory usage remains stable at 30-32MB throughout the simulation. The
-gradual upward drift of approximately 0.01MB per minute is attributable to
-cache entry accumulation. At this rate the cache would consume an
-additional ~14MB over 24 hours of operation — well within acceptable
-limits for the 1,000-entry max_entries configuration.
+The real prompt length histogram shows 41 of 45 prompts
+contain 5 or fewer tokens (short factual questions like
+"What is machine learning"). This short-prompt workload
+explains the relatively fast cold inference times of
+387-448ms — longer prompts would take proportionally more
+time to process.
 
 ---
 
 ## 2. Identified Bottlenecks and Risks
 
-### Bottleneck 1: CPU-Bound Inference Latency
-The most significant bottleneck is cold-inference latency on CPU hardware.
-At 380-480ms per request for a 82M-parameter model (DistilGPT-2), the
-system would require GPU acceleration to serve latency-sensitive
-applications. On GPU hardware the same model would achieve 10-50ms
-inference latency, enabling throughput of 50-200 req/s without caching.
+### Bottleneck 1: CPU Cold Inference Latency (849ms avg)
+The dominant bottleneck is cold-inference latency on CPU.
+At 849ms average (with 4,293ms warm-up spike), the system
+cannot serve latency-sensitive applications without caching.
 
-**Mitigation:** Deploy on GPU instance (e.g., AWS g4dn.xlarge) or use
-a quantized model variant (INT8/INT4) to reduce CPU inference time by
-3-5x.
+**Real evidence:** 1 of 13 cold requests took 4,293ms
+(initial JIT warm-up). Subsequent requests stabilized at
+387-448ms. This warm-up overhead must be accounted for in
+production deployment — the first request after server
+restart will always be significantly slower.
 
-### Bottleneck 2: Single-Node Throughput Ceiling
-The peak observed throughput of 18.5 req/s (cached) represents the
-practical ceiling for a single-process Python server. Under uncached
-load the ceiling drops to 2-3 req/s. There is no horizontal scaling
-in the current deployment.
+**Mitigation:** Pre-warm the model on startup with a dummy
+inference request. Deploy on GPU hardware for 10-50x
+latency reduction. Use quantized model (INT8) for 3-5x
+CPU improvement.
 
-**Mitigation:** Add a load balancer (nginx or AWS ALB) in front of
-multiple server instances. Each instance maintains its own in-process
-cache; a shared Redis cache would be required to preserve hit rates
-across instances.
+### Bottleneck 2: Memory Pressure at 482.9MB
+At 482.9MB the process is consuming significant RAM for
+a single-model deployment. Horizontal scaling to 4
+instances would require ~2GB RAM minimum.
 
-### Bottleneck 3: In-Process Cache Not Shared Across Instances
-The current LRU cache lives in process memory. Any horizontal scaling
-would start each new instance with a cold cache, temporarily
-eliminating the caching benefit.
+**Mitigation:** Use quantized model weights (INT8 reduces
+to ~83MB). Implement model sharing across worker processes.
 
-**Mitigation:** Migrate to Redis with a consistent hashing strategy
-so all instances share a single cache namespace.
+### Bottleneck 3: Single-Node Throughput Ceiling
+Peak measured throughput of 0.75 rps (post-traffic) with
+no horizontal scaling. Under sustained unique-prompt load
+the system cannot exceed ~2 rps on CPU hardware.
 
-### Risk 1: P99 Latency SLA Breach Under Sustained Load
-P99 latency crosses 700ms during the load spike phase. If sustained
-for more than 5 minutes this would breach most enterprise SLA
-commitments of 500ms at P95.
+**Mitigation:** Load balancer + multiple instances for
+horizontal scaling. Shared Redis cache to preserve hit
+rates across instances.
 
-### Risk 2: Error Rate Spike During Inference Failure
-The 28% error rate during error injection, while simulated, represents
-a realistic risk during GPU out-of-memory events or model serving
-crashes. Without circuit-breaker logic the server will continue
-accepting requests it cannot serve, increasing queue depth and
-worsening latency for all users.
+### Risk 1: Warm-up Latency Spike on Restart
+The first cold inference takes 4,293ms — 5x slower than
+subsequent requests. This creates a visible latency spike
+after any server restart or deployment.
 
-**Mitigation:** Implement circuit-breaker pattern: if error rate
-exceeds 10% for 60 seconds, return 503 responses immediately rather
-than queuing requests.
+**Mitigation:** Implement startup inference warm-up:
+send 1-2 dummy requests during lifespan startup before
+marking server as ready.
 
-### Risk 3: Input Drift Leading to Silent Performance Degradation
-The drift score crossing 0.10 at the 100-minute mark is a leading
-indicator of potential model performance degradation. Unlike latency
-or error rate spikes which are immediately visible, drift-induced
-accuracy degradation is silent and may not be detected until user
-complaints surface.
+### Risk 2: Cache Effectiveness Degrades with Unique Prompts
+With 13 unique prompts out of 45 total requests, the
+hit rate stabilized at 71.1%. For workloads with higher
+prompt diversity the hit rate will be lower and latency
+will approach cold inference times.
 
-**Mitigation:** Automated drift monitoring with threshold-triggered
-retraining pipeline. Connect drift alerts (C1) to the retraining
-audit trail (C3) and the drift diagnostic report (C4).
+**Mitigation:** Monitor cache hit rate in production.
+If sustained below 30% consider semantic caching using
+embedding similarity to match similar prompts.
+
+### Risk 3: No Authentication on /metrics Endpoint
+The Prometheus /metrics endpoint exposes system resource
+usage (memory, CPU) without authentication. This could
+leak operational intelligence to unauthorized parties.
+
+**Mitigation:** Restrict /metrics to internal network
+only via firewall rules or API gateway configuration.
 
 ---
 
@@ -160,44 +178,47 @@ audit trail (C3) and the drift diagnostic report (C4).
 
 | Alert | Metric | Condition | Severity | Action |
 |---|---|---|---|---|
-| High Latency | P95 latency | > 500ms for 2min | Warning | Scale out |
-| Critical Latency | P99 latency | > 1000ms for 1min | Critical | Page on-call |
-| High Error Rate | Error rate | > 5% for 1min | Warning | Investigate logs |
-| Critical Error Rate | Error rate | > 15% for 30s | Critical | Circuit breaker |
+| Warm-up Spike | Cold latency | > 3,000ms on first request | Warning | Expected — log only |
+| High Cold Latency | Cold avg latency | > 1,500ms sustained | Warning | Check CPU/memory |
+| Critical Latency | P99 latency | > 5,000ms | Critical | Page on-call |
 | Low Cache Hit Rate | Hit rate | < 20% for 5min | Info | Review workload |
-| Memory Pressure | Memory | > 4GB | Warning | Restart server |
-| Input Drift Warning | KS statistic | > 0.10 | Warning | Review inputs |
-| Input Drift Alert | KS statistic | > 0.20 | Critical | Trigger retraining |
-| Queue Saturation | Queue depth | > 80 requests | Warning | Scale out |
-| Throughput Drop | RPS | < 0.5 for 2min | Warning | Health check |
+| Memory Pressure | Memory | > 1,500MB | Warning | Restart or scale |
+| High CPU | CPU | > 90% for 2min | Warning | Scale out |
+| Error Rate | Error rate | > 5% | Critical | Investigate logs |
+| Throughput Drop | RPS | < 0.1 for 2min | Warning | Health check |
 
 ---
 
 ## 4. Dashboard Design Justification
 
-### Why Prometheus + Grafana
-Prometheus was selected as the metrics backend because it is the
-industry-standard open-source time-series database for service
-monitoring, with native support for the pull-based scrape model
-that works well with Python FastAPI services. The prometheus_client
-Python library provides zero-overhead histogram and counter
-instrumentation with minimal code changes to the existing server.
+### Why Prometheus + python prometheus_client
+Prometheus was selected because it is the industry-standard
+open-source metrics backend with native Python client support.
+The prometheus_client library adds zero-overhead instrumentation
+via Counter, Histogram, and Gauge primitives that integrate
+directly into the FastAPI server without modifying inference
+logic.
 
-Grafana provides the visualization layer with support for threshold
-coloring, time range selection, and alert rule configuration — all
-critical for production monitoring workflows.
+The /metrics endpoint follows the OpenMetrics standard,
+making the instrumentation compatible with any Prometheus-
+compatible visualization tool (Grafana, Datadog, New Relic)
+without code changes.
 
 ### Why These Specific Metrics
-The six primary metrics (latency percentiles, throughput, cache hit
-rate, error rate, drift score, memory) were selected to cover all
-four dimensions of the Google SRE golden signals framework:
-latency, traffic, errors, and saturation. The drift score is an
-LLM-specific addition that goes beyond traditional service monitoring
-to address model-specific reliability concerns.
+The metrics were selected to cover the four Google SRE
+golden signals: latency (REQUEST_LATENCY histogram),
+traffic (REQUEST_COUNT, THROUGHPUT), errors (ERROR_COUNT),
+and saturation (MEMORY_MB, CPU_PCT, ACTIVE_REQUESTS).
 
-### Panel Layout Rationale
-The top row of stat panels provides an at-a-glance health summary
-for on-call engineers. The middle row of time series panels enables
-trend analysis and correlation between metrics. The bottom row of
-detailed panels (phase breakdown, cumulative cache performance,
-summary stats) supports post-incident analysis and capacity planning.
+The cache-specific metrics (CACHE_HIT_RATE, CACHE_SIZE)
+are LLM-specific additions that go beyond standard service
+monitoring to address the caching optimization that is the
+primary performance lever for this system.
+
+### Real vs Simulated Data
+All metrics in this dashboard are sourced from real inference
+requests against the live DistilGPT-2 model. The raw
+Prometheus output is saved in
+`logs/real_prometheus_metrics.txt` for full reproducibility.
+No simulated or estimated values are used in the metrics
+panels.

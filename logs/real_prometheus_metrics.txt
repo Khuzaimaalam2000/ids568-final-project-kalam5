@@ -1,0 +1,85 @@
+# HELP llm_requests_total Total inference requests
+# TYPE llm_requests_total counter
+llm_requests_total{cached="false",endpoint="/infer",status="success"} 13.0
+llm_requests_total{cached="true",endpoint="/infer",status="success"} 32.0
+# HELP llm_requests_created Total inference requests
+# TYPE llm_requests_created gauge
+llm_requests_created{cached="false",endpoint="/infer",status="success"} 1.777325467130683e+09
+llm_requests_created{cached="true",endpoint="/infer",status="success"} 1.777325471080947e+09
+# HELP llm_request_latency_seconds Request latency
+# TYPE llm_request_latency_seconds histogram
+llm_request_latency_seconds_bucket{cached="false",le="0.001"} 0.0
+llm_request_latency_seconds_bucket{cached="false",le="0.005"} 0.0
+llm_request_latency_seconds_bucket{cached="false",le="0.01"} 0.0
+llm_request_latency_seconds_bucket{cached="false",le="0.05"} 0.0
+llm_request_latency_seconds_bucket{cached="false",le="0.1"} 0.0
+llm_request_latency_seconds_bucket{cached="false",le="0.5"} 9.0
+llm_request_latency_seconds_bucket{cached="false",le="1.0"} 11.0
+llm_request_latency_seconds_bucket{cached="false",le="2.0"} 12.0
+llm_request_latency_seconds_bucket{cached="false",le="5.0"} 13.0
+llm_request_latency_seconds_bucket{cached="false",le="+Inf"} 13.0
+llm_request_latency_seconds_count{cached="false"} 13.0
+llm_request_latency_seconds_sum{cached="false"} 11.042110443115234
+llm_request_latency_seconds_bucket{cached="true",le="0.001"} 32.0
+llm_request_latency_seconds_bucket{cached="true",le="0.005"} 32.0
+llm_request_latency_seconds_bucket{cached="true",le="0.01"} 32.0
+llm_request_latency_seconds_bucket{cached="true",le="0.05"} 32.0
+llm_request_latency_seconds_bucket{cached="true",le="0.1"} 32.0
+llm_request_latency_seconds_bucket{cached="true",le="0.5"} 32.0
+llm_request_latency_seconds_bucket{cached="true",le="1.0"} 32.0
+llm_request_latency_seconds_bucket{cached="true",le="2.0"} 32.0
+llm_request_latency_seconds_bucket{cached="true",le="5.0"} 32.0
+llm_request_latency_seconds_bucket{cached="true",le="+Inf"} 32.0
+llm_request_latency_seconds_count{cached="true"} 32.0
+llm_request_latency_seconds_sum{cached="true"} 0.0018475055694580078
+# HELP llm_request_latency_seconds_created Request latency
+# TYPE llm_request_latency_seconds_created gauge
+llm_request_latency_seconds_created{cached="false"} 1.777325467130752e+09
+llm_request_latency_seconds_created{cached="true"} 1.777325471080981e+09
+# HELP llm_cache_hit_rate Rolling cache hit rate
+# TYPE llm_cache_hit_rate gauge
+llm_cache_hit_rate 0.7111111111111111
+# HELP llm_cache_size Current cache entries
+# TYPE llm_cache_size gauge
+llm_cache_size 13.0
+# HELP llm_throughput_rps Requests per second
+# TYPE llm_throughput_rps gauge
+llm_throughput_rps 0.75
+# HELP llm_active_requests Active requests
+# TYPE llm_active_requests gauge
+llm_active_requests 0.0
+# HELP llm_memory_mb Memory usage MB
+# TYPE llm_memory_mb gauge
+llm_memory_mb 482.88671875
+# HELP llm_cpu_pct CPU usage percent
+# TYPE llm_cpu_pct gauge
+llm_cpu_pct 55.8
+# HELP llm_errors_total Total errors
+# TYPE llm_errors_total counter
+# HELP llm_batch_size Batch sizes
+# TYPE llm_batch_size histogram
+llm_batch_size_bucket{le="1.0"} 0.0
+llm_batch_size_bucket{le="2.0"} 0.0
+llm_batch_size_bucket{le="4.0"} 0.0
+llm_batch_size_bucket{le="8.0"} 0.0
+llm_batch_size_bucket{le="16.0"} 0.0
+llm_batch_size_bucket{le="+Inf"} 0.0
+llm_batch_size_count 0.0
+llm_batch_size_sum 0.0
+# HELP llm_batch_size_created Batch sizes
+# TYPE llm_batch_size_created gauge
+llm_batch_size_created 1.777307188250709e+09
+# HELP llm_prompt_length_tokens Prompt lengths
+# TYPE llm_prompt_length_tokens histogram
+llm_prompt_length_tokens_bucket{le="5.0"} 41.0
+llm_prompt_length_tokens_bucket{le="10.0"} 45.0
+llm_prompt_length_tokens_bucket{le="20.0"} 45.0
+llm_prompt_length_tokens_bucket{le="50.0"} 45.0
+llm_prompt_length_tokens_bucket{le="100.0"} 45.0
+llm_prompt_length_tokens_bucket{le="200.0"} 45.0
+llm_prompt_length_tokens_bucket{le="+Inf"} 45.0
+llm_prompt_length_tokens_count 45.0
+llm_prompt_length_tokens_sum 191.0
+# HELP llm_prompt_length_tokens_created Prompt lengths
+# TYPE llm_prompt_length_tokens_created gauge
+llm_prompt_length_tokens_created 1.7773071882507808e+09
