@@ -1,4 +1,3 @@
-cat > README.md << 'READMEEOF'
 # IDS568 Final Project: Monitoring, Governance & Reflection
 **Author:** Khuzaima Alam | **NetID:** kalam5  
 **Course:** IDS568 MLOps | **Date:** April 2026
