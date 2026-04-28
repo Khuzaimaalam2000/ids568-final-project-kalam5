@@ -33,6 +33,13 @@ categories across three real traffic phases: Cold Cache (requests
 (requests 31-45). All metrics are sourced from the live
 Prometheus /metrics endpoint — no simulated data.
 
+The most important interpretation is that the service is healthy
+for repeated short-prompt workloads, but not uniformly fast under
+all traffic conditions. The dashboard shows a system whose user
+experience depends heavily on cache reuse and warm process state.
+That distinction matters because a blended average could make the
+system look healthier than the uncached path really is.
+
 ### 1.1 Latency Panels
 
 The latency comparison is the most critical health indicator.
@@ -59,6 +66,20 @@ model warm-up is incomplete or the system is under memory
 pressure. The 849ms average is acceptable for CPU inference
 but would require GPU acceleration for latency-sensitive SLAs.
 
+That means the correct diagnosis is not simply "latency is under a
+second." It is "the cold path is barely acceptable for internal or
+offline use, but misses the margin needed for an interactive SLA."
+If the cache hit rate falls or the service restarts, users quickly
+move from sub-millisecond responses to near-second responses.
+
+A useful counterfactual makes this clearer. If every request looked
+like the 32 cache hits, the system would appear massively
+overprovisioned. If every request looked like the 13 cache misses,
+the same system would look borderline for user-facing traffic. The
+dashboard therefore shows a bimodal service, not a consistently
+fast one, and operational planning has to be based on the slower
+mode because that is what users see whenever reuse disappears.
+
 ### 1.2 Throughput Panel
 
 The throughput gauge shows 0.75 rps at time of measurement.
@@ -70,6 +91,20 @@ During warm cache phases the effective throughput for cached
 requests exceeded 100 rps (sub-millisecond responses). The
 combined throughput is dominated by cold inference time when
 cache miss rate is high.
+
+Throughput therefore should be read as a workload-dependent metric,
+not a fixed property of the architecture. If prompt diversity
+increases, the effective throughput will collapse toward the
+CPU-bound cold path. In production, a throughput drop would most
+likely be explained by lower cache reuse or longer prompts, not by
+an isolated serving bug.
+
+This is why throughput by itself is a weak management metric here.
+Throughput is the output of several upstream conditions: prompt
+complexity, cache reuse, and cold-path latency. Treating a lower
+throughput number as the problem would be analytically backward.
+The real problem would be whichever upstream driver caused the
+throughput number to fall.
 
 ### 1.3 Cache Hit Rate Panel
 
@@ -87,6 +122,20 @@ sufficient prompt repetition for caching to provide
 meaningful latency benefits. Our 71.1% rate exceeds this
 threshold.
 
+This is the strongest positive signal on the dashboard, but it is
+also the most fragile one. A 71.1% hit rate says the current
+traffic mix is favorable, not that the system is inherently cheap
+or fast. If this metric drops below 40% for a sustained interval,
+the expected consequence is not just a lower optimization score; it
+is materially worse end-user latency and lower throughput.
+
+More importantly, cache hit rate is a leverage metric. A 31-point
+drop from 71% to 40% would likely matter more operationally than a
+similar-sized change in memory usage because it changes how often
+the service is forced onto the expensive cold path. That makes it a
+better early-warning indicator than several traditional
+infrastructure metrics.
+
 ### 1.4 Memory Panel
 
 Process memory consumption is 482.9MB — significantly higher
@@ -99,6 +148,12 @@ CPU usage at 55.8% reflects post-inference measurement. During
 active cold inference CPU spikes to 90-100% as the model
 performs autoregressive token generation.
 
+The deeper reading is that memory is stable but CPU is the true
+saturation point. The model comfortably fits in RAM for a single
+instance, so the first production failure mode is CPU contention
+during cache misses, which then appears downstream as latency
+increase, timeouts, and lower request throughput.
+
 ### 1.5 Prompt Length Distribution
 
 The real prompt length histogram shows 41 of 45 prompts
@@ -107,6 +162,20 @@ contain 5 or fewer tokens (short factual questions like
 explains the relatively fast cold inference times of
 387-448ms — longer prompts would take proportionally more
 time to process.
+
+This panel is diagnostically important because it explains why the
+current results look good. The workload is dominated by short
+questions. If prompt length shifts upward, the dashboard should be
+expected to show worsening latency, lower cache effectiveness, and
+more outlier requests. Prompt length is therefore a leading signal,
+not just descriptive context.
+
+In practice, this means the prompt-length panel should be treated as
+an explanatory variable for the rest of the dashboard. If prompt
+length stays flat while latency rises, the likely cause is
+infrastructure saturation. If prompt length rises first and latency
+follows, the likely cause is workload shift. That distinction helps
+separate platform issues from product-usage change.
 
 ---
 
@@ -128,6 +197,18 @@ inference request. Deploy on GPU hardware for 10-50x
 latency reduction. Use quantized model (INT8) for 3-5x
 CPU improvement.
 
+This bottleneck matters because it defines whether the system can
+meet any interactive SLA once the cache fast path is unavailable.
+If cold latency stays above 1,500ms for multiple intervals, the
+correct response is architectural intervention or capacity change,
+not simply acknowledging an alert.
+
+The analytical point is that the cache does not eliminate the need
+for a viable base serving path; it only masks that need when prompt
+reuse is high. A mature production review would therefore grade the
+system on the cold path first and treat cache wins as upside rather
+than as the sole justification for readiness.
+
 ### Bottleneck 2: Memory Pressure at 482.9MB
 At 482.9MB the process is consuming significant RAM for
 a single-model deployment. Horizontal scaling to 4
@@ -144,6 +225,17 @@ the system cannot exceed ~2 rps on CPU hardware.
 **Mitigation:** Load balancer + multiple instances for
 horizontal scaling. Shared Redis cache to preserve hit
 rates across instances.
+
+This is also a business risk. A single-node ceiling that looks
+acceptable in a demo environment leaves very little headroom for
+traffic growth, incident recovery, or a shift toward more diverse
+prompts. The dashboard shows a system optimized for efficiency
+under repetition, not yet resilience under expansion.
+
+Said differently, the current architecture is elastic with respect
+to repeated prompts but not elastic with respect to demand shape.
+That is a subtler but more important limitation than simply saying
+"throughput is low on one node."
 
 ### Risk 1: Warm-up Latency Spike on Restart
 The first cold inference takes 4,293ms — 5x slower than
@@ -186,6 +278,19 @@ only via firewall rules or API gateway configuration.
 | High CPU | CPU | > 90% for 2min | Warning | Scale out |
 | Error Rate | Error rate | > 5% | Critical | Investigate logs |
 | Throughput Drop | RPS | < 0.1 for 2min | Warning | Health check |
+
+These alert thresholds are most useful when read together. For
+example, low cache hit rate plus rising latency suggests workload
+change, while high CPU plus rising error rate suggests active user
+impact from saturation. The dashboard is strongest as a diagnostic
+surface when it is used to connect signals rather than react to one
+number at a time.
+
+That multi-signal reading is the main analytical value of the
+dashboard. A single metric can indicate that something changed; a
+combination of metrics can indicate why it changed and whether the
+right response is scaling, retraining, cache redesign, or simple
+observation.
 
 ---
 

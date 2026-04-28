@@ -12,6 +12,12 @@ Based on the results of EXP-001, I recommend **shipping Variant B**
 (optimized LLM inference server with dynamic batching and caching)
 to 100% of production traffic.
 
+This is a conditional recommendation rather than an unconditional
+"best model wins" decision. Ship B for the current workload shape
+because it clearly dominates A on speed and reliability, while
+continuing to monitor whether the workload remains cache-friendly
+enough for those gains to persist in production.
+
 ---
 
 ## Key Results
@@ -53,6 +59,19 @@ Server availability remained at 100% throughout the simulation.
 Cohen's d = 6.2 for latency, indicating an extremely large practical
 effect — not just a statistically detectable noise difference.
 
+The key decision logic is that B changes the operating economics of
+the service, not just its benchmark score. It moves the system from
+"fragile and expensive on CPU" toward "operationally viable for the
+observed workload class," which is why the recommendation is to
+ship rather than to collect only marginally more evidence first.
+
+Another way to frame the decision is that A and B are not close.
+This is not a marginal win where organizational caution should
+default to "run longer." On the observed workload, B produces a
+step-change in performance. That is why the burden of proof shifts:
+the question is no longer "is B better?" but "under what production
+conditions would B stop being better enough to justify rollout?"
+
 ---
 
 ## Risks and Mitigations
@@ -70,6 +89,20 @@ below 30%, consider increasing TTL or implementing semantic caching.
 **Mitigation:** 50ms batch timeout ensures maximum 50ms added
 latency even at zero load — acceptable for all current use cases.
 
+The biggest remaining uncertainty is not whether B outperforms A;
+the experiment already answers that. The uncertainty is whether the
+production traffic mix will stay similar enough to the simulated
+one for cache reuse and batching gains to hold. That is why the
+rollout plan needs production validation rather than assuming the
+offline experiment closes the question permanently.
+
+That uncertainty is structurally important because B’s gains come
+from mechanisms that are workload-sensitive. A model whose gain
+came from a universally better algorithm might generalize more
+cleanly. Here, the gain depends on reuse and queueing behavior, so
+the rollout has to verify that the production environment preserves
+those conditions.
+
 ---
 
 ## Recommended Rollout Plan
@@ -79,6 +112,19 @@ latency even at zero load — acceptable for all current use cases.
 3. Ramp to 50% for 48 hours, monitor error rate and P99
 4. Full 100% rollout if no regressions observed
 5. Decommission Variant A infrastructure after 7-day soak period
+
+The stop conditions are as important as the go decision. If cache
+hit rate falls below 30%, P99 latency rises above the modeled
+guardrail, or error rate drifts back toward A-level performance,
+the rollout should pause even if average latency still looks
+better. That is what makes the recommendation operationally safe
+rather than only statistically justified.
+
+This also prevents a common analytical mistake: over-weighting the
+mean. Average latency can still improve while tail latency,
+reliability, or workload diversity worsens. The memo therefore
+treats rollout as a multidimensional decision, not a single-metric
+optimization.
 
 ---
 
